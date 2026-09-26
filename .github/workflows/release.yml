@@ -40,8 +40,7 @@ jobs:
         run: npm run build
 
       - name: Publish to npm
-        run: npm publish --access public
-        # 不传 NODE_AUTH_TOKEN，让 npm CLI 走 OIDC
+        run: npm publish --access public --provenance
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
