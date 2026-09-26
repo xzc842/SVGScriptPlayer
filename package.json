@@ -1,6 +1,6 @@
 {
   "name": "svg-script-player",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "用文本脚本描述 SVG 动画和交互场景的运行时，支持浏览器实时播放与 Node 端 FFmpeg 渲染成视频",
   "type": "module",
   "license": "MIT",
