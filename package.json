@@ -1,41 +1,79 @@
 {
   "name": "svg-script-player",
   "version": "0.1.0",
+  "description": "用文本脚本描述 SVG 动画和交互场景的运行时，支持浏览器实时播放与 Node 端 FFmpeg 渲染成视频",
   "type": "module",
-  "main": "./dist/svg-script-player.node.js",
+  "license": "MIT",
+  "author": "xzc",
+  "keywords": [
+    "svg",
+    "animation",
+    "script",
+    "player",
+    "ffmpeg",
+    "video",
+    "ai",
+    "generative"
+  ],
+  "homepage": "https://github.com/xzc842/SVGScriptPlayer#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xzc842/SVGScriptPlayer.git"
+  },
+  "bugs": {
+    "url": "https://github.com/xzc842/SVGScriptPlayer/issues"
+  },
+
+  "main": "./dist/svg-script-player.node.cjs",
   "module": "./dist/svg-script-player.esm.js",
   "browser": "./dist/svg-script-player.esm.js",
+  "unpkg": "./dist/svg-script-player.umd.js",
+  "jsdelivr": "./dist/svg-script-player.umd.js",
+  "types": "./dist/index.d.ts",
+
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "browser": "./dist/svg-script-player.esm.js",
-      "node": "./dist/svg-script-player.node.js",
+      "node": {
+        "import": "./dist/svg-script-player.node.js",
+        "require": "./dist/svg-script-player.node.cjs"
+      },
+      "import": "./dist/svg-script-player.esm.js",
       "default": "./dist/svg-script-player.esm.js"
     },
     "./node": {
-      "node": "./dist/svg-script-player.node.js"
+      "types": "./dist/node.d.ts",
+      "import": "./dist/svg-script-player.node.js",
+      "require": "./dist/svg-script-player.node.cjs"
+    },
+    "./browser": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/svg-script-player.esm.js"
     },
     "./templates": {
+      "types": "./dist/templates.d.ts",
       "default": "./dist/svg-script-player.esm.js"
-    }
+    },
+    "./package.json": "./package.json"
   },
+
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+
+  "sideEffects": false,
+
   "scripts": {
     "build": "rollup -c",
-    "dev": "rollup -c -w",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "example:browser": "vite examples/browser",
-    "example:node": "node examples/node/render.js"
+    "build:types": "tsc --emitDeclarationOnly --declaration --outDir dist",
+    "prepublishOnly": "npm run build && npm run build:types"
   },
-  "dependencies": {
-    "@resvg/resvg-js": "^2.6.0"
-  },
-  "optionalDependencies": {
-    "ffmpeg-static": "^5.2.0",
-    "sharp": "^0.33.0"
-  },
-  "devDependencies": {
-    "rollup": "^4.0.0",
-    "vitest": "^1.0.0",
-    "vite": "^5.0.0"
+
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   }
 }

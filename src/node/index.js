@@ -10,6 +10,7 @@ import {
   getTemplate,
 } from "../templates/index.js";
 
+// 确保内置模板已注册
 loadBuiltinTemplates();
 
 export class SVGScriptNodePlayer extends Player {
@@ -35,7 +36,9 @@ export class SVGScriptNodePlayer extends Player {
   }
 }
 
-// 一行出片：加载脚本 → 渲染视频
+/**
+ * 一行出片：加载脚本 → 渲染视频
+ */
 export async function renderScriptToVideo({
   script,
   scriptFile,
@@ -51,12 +54,11 @@ export async function renderScriptToVideo({
   return await renderVideo({ ...options, player });
 }
 
+// 统一导出（注意：不要重复上面 export 过的）
 export {
   Player,
-  SVGScriptNodePlayer,
   renderVideo,
   renderBatch,
-  renderScriptToVideo,
   svgToPng,
   readScript,
   createNodeLoader,

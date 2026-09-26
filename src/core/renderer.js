@@ -263,7 +263,8 @@ function serializeElement(id, e) {
 
   if (shape === "line") {
     const to = params.to || [x + 100, y];
-    return `<line data-id="${id}" x1="${x}" y1="${y}" x2="${numOr(to[0], x + 100)}" y2="${numOr(to[1], y)}" stroke="${params.stroke ?? "#000"}" ${strokeAttrs(params)}${opacityAttr(params)}/>`;
+    const strokeParams = { stroke: "#000", ...params };
+    return `<line data-id="${id}" x1="${x}" y1="${y}" x2="${numOr(to[0], x + 100)}" y2="${numOr(to[1], y)}" ${strokeAttrs(strokeParams)}${opacityAttr(params)}/>`;
   }
 
   if (shape === "path") {

@@ -8,10 +8,12 @@ const external = [
   "node:path",
   "node:child_process",
   "node:module",
+  "node:url",
   "fs",
   "path",
   "child_process",
   "module",
+  "url",
 ];
 
 export default [
@@ -43,6 +45,17 @@ export default [
       file: "dist/svg-script-player.node.js",
       format: "esm",
       sourcemap: true,
+    },
+    external,
+  },
+  // Node CJS  ← 新增
+  {
+    input: "src/node/index.js",
+    output: {
+      file: "dist/svg-script-player.node.cjs",
+      format: "cjs",
+      sourcemap: true,
+      exports: "named",
     },
     external,
   },
