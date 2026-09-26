@@ -57,7 +57,7 @@ export function parseValue(raw) {
   // 数字
   if (!isNaN(v) && v !== "") return parseFloat(v);
 
-  // 其他原样返回（如颜色、标识符）
+  // 其他原样返回
   return v;
 }
 
@@ -109,4 +109,71 @@ export function splitTopLevel(source, sep = ",") {
 
   if (buf.trim()) parts.push(buf.trim());
   return parts;
+}
+
+/**
+ * 对源字符串里的表达式求值。
+ * 支持：
+ *   - 数组内的数字算术：[100, 500 - 80] → [100, 420]
+ *   - 字符串拼接："dot_" + "A" → "dot_A"
+ */
+export function evaluateExpressions(source) {
+  if (typeof source !== "string") return source;
+
+  let result = source;
+
+  // 1. 处理数组内的表达式 [expr, expr, ...]
+  result = result.replace(/\[([^\]]+)\]/g, (match, inner) => {
+    const parts = splitTopLevel(inner, ",");
+    const evaluated = parts.map((p) => evaluateSingle(p.trim()));
+    return `[${evaluated.join(", ")}]`;
+  });
+
+  // 2. 处理字符串拼接 "a" + "b" + ...
+  // 循环处理，直到没有 + 或达到上限
+  for (let i = 0; i < 20; i++) {
+    const before = result;
+    result = result.replace(
+      /"([^"\\]*(?:\\.[^"\\]*)*)"\s*\+\s*"([^"\\]*(?:\\.[^"\\]*)*)"/g,
+      (m, a, b) => `"${a}${b}"`
+    );
+    if (result === before) break;
+  }
+
+  return result;
+}
+
+/**
+ * 对单个表达式求值。
+ * 只处理安全的形式：
+ *   - 纯数字：返回数字字符串
+ *   - 数字算术：100 + 50、500 - 80、2 * 3、10 / 2
+ *   - 字符串字面量："abc"
+ *   - 其他：原样返回
+ */
+function evaluateSingle(expr) {
+  if (typeof expr !== "string") return expr;
+  const s = expr.trim();
+
+  // 字符串字面量：原样保留
+  if (/^".*"$/.test(s) || /^'.*'$/.test(s)) return s;
+
+  // 数字
+  if (/^-?\d+(\.\d+)?$/.test(s)) return s;
+
+  // 纯数字算术表达式（只允许数字、空格、运算符、括号、小数点）
+  if (/^[\d\s+\-*/().]+$/.test(s)) {
+    try {
+      // 只允许数字和运算符，安全
+      const result = Function(`"use strict"; return (${s})`)();
+      if (typeof result === "number" && Number.isFinite(result)) {
+        return String(result);
+      }
+    } catch (e) {
+      // 求值失败，保留原样
+    }
+  }
+
+  // 其他原样返回
+  return s;
 }

@@ -1,0 +1,34 @@
+# 交互脚本：问题 + 插槽
+
+config {
+  size = 900x600,
+  background = "#0f172a"
+}
+
+text {
+  at = [450, 80],
+  content = "小测验",
+  size = 36,
+  color = "#f1f5f9",
+  anchor = "middle",
+  weight = 700,
+  name = "title"
+}
+
+dialog {
+  at = [100, 180],
+  speaker = "系统",
+  text = "1 + 1 = ?",
+  side = "left",
+  theme = "light",
+  duration = 99999
+}
+
+tag { name = "question" }
+
+div {
+  at = [300, 280],
+  w = 300,
+  h = 220,
+  id = "quiz1"
+}

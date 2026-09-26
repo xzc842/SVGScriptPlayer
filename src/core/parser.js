@@ -75,6 +75,12 @@ function stripComment(line) {
   return line;
 }
 
+/**
+ * 从 start 行开始，读取一个 { ... } 块。
+ * 返回 { params, next }：
+ *   - params：解析后的参数对象
+ *   - next：块结束后的下一行索引
+ */
 function readBlock(lines, start, startLine, file) {
   let i = start;
   let depth = 0;
@@ -111,9 +117,12 @@ function readBlock(lines, start, startLine, file) {
   return { params, next: i };
 }
 
+/**
+ * 解析参数列表。
+ * 用 splitTopLevel 按顶层逗号切分，忽略 [] {} () 和引号内的逗号。
+ */
 function parseParams(source) {
   const params = {};
-  // 按顶层逗号切分
   const parts = splitTopLevel(source, ",");
 
   for (const part of parts) {
@@ -127,12 +136,22 @@ function parseParams(source) {
     const rawVal = seg.slice(eq + 1).trim();
     if (!key) continue;
 
+    // children 保持原始字符串，由 expander 处理
+    if (key === "children") {
+      params[key] = rawVal;
+      continue;
+    }
+
     params[key] = parseValue(rawVal);
   }
 
   return params;
 }
 
+/**
+ * 解析 def。
+ * 关键：def.body 是 { 和 } 之间的内容，不包含 def 头和外层花括号。
+ */
 function parseDef(lines, start) {
   const header = stripComment(lines[start]).trim();
   const m = header.match(/^def\s+([A-Za-z_][\w-]*)\s*\(([^)]*)\)\s*\{/);
@@ -153,48 +172,25 @@ function parseDef(lines, start) {
       return { name: pname, default: parseValue(defVal) };
     });
 
-  // 收集函数体
-  let i = start;
-  let depth = 0;
-  let started = false;
-  const bodyLines = [];
+  // 用 readBlock 找到 def 块的范围
+  const { next } = readBlock(lines, start, start + 1, "inline");
 
-  while (i < lines.length) {
-    const line = lines[i];
-    let lineStartDepth = depth;
+  // 拼出 def 块的完整文本
+  const blockLines = lines.slice(start, next);
+  const blockText = blockLines.join("\n");
 
-    for (const ch of line) {
-      if (ch === "{") {
-        depth++;
-        if (depth === 1) started = true;
-      } else if (ch === "}") {
-        depth--;
-      }
-    }
-
-    // 只收集 body 内的行（不包含最外层 def 的 {}）
-    if (started) {
-      if (lineStartDepth >= 1) {
-        bodyLines.push(line);
-      } else if (depth >= 1) {
-        bodyLines.push(line);
-      }
-    }
-
-    if (started && depth === 0) {
-      i++;
-      break;
-    }
-    i++;
-  }
+  // 取第一个 { 和最后一个 } 之间的内容
+  const firstBrace = blockText.indexOf("{");
+  const lastBrace = blockText.lastIndexOf("}");
+  const body = blockText.slice(firstBrace + 1, lastBrace).trim();
 
   return {
     node: {
       type: "Def",
       name,
       params,
-      body: bodyLines.join("\n"),
+      body,
     },
-    next: i,
+    next,
   };
 }

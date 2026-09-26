@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SVG Script Player · 交互演示</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: #0b1120;
+    color: #e2e8f0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px;
+  }
+
+  header {
+    width: 100%;
+    max-width: 960px;
+    margin-bottom: 16px;
+  }
+
+  header h1 {
+    font-size: 1.25rem;
+    font-weight: 600;
+  }
+
+  header h1 span {
+    color: #818cf8;
+    font-size: 0.85rem;
+    margin-left: 8px;
+    font-weight: 500;
+  }
+
+  .stage-wrap {
+    width: 100%;
+    max-width: 960px;
+    background: #111827;
+    border-radius: 20px;
+    padding: 12px;
+    box-shadow: 0 20px 50px -20px rgba(0, 0, 0, 0.6);
+  }
+
+  #stage {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 3 / 2;
+    background: #0f172a;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .svg-script-slot-layer {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .svg-script-slot {
+    pointer-events: auto;
+  }
+
+  /* 插槽里的 HTML 样式 */
+  .quiz {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  }
+
+  .quiz p {
+    font-size: 1rem;
+    color: #1e293b;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  .quiz button {
+    padding: 10px 16px;
+    background: #f1f5f9;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    color: #1e293b;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-weight: 500;
+  }
+
+  .quiz button:hover {
+    background: #e2e8f0;
+    border-color: #cbd5e1;
+  }
+
+  .quiz button.correct {
+    background: #10b981;
+    border-color: #10b981;
+    color: #fff;
+  }
+
+  .quiz button.wrong {
+    background: #ef4444;
+    border-color: #ef4444;
+    color: #fff;
+  }
+
+  .controls {
+    width: 100%;
+    max-width: 960px;
+    margin-top: 16px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+  }
+
+  button.ctrl {
+    background: #1e293b;
+    color: #e2e8f0;
+    border: 1px solid #334155;
+    border-radius: 999px;
+    padding: 8px 18px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  button.ctrl:hover:not(:disabled) {
+    background: #273449;
+  }
+
+  button.ctrl:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  button.ctrl.primary {
+    background: #4f46e5;
+    border-color: #4f46e5;
+    color: #fff;
+  }
+
+  .status {
+    width: 100%;
+    max-width: 960px;
+    margin-top: 12px;
+    font-size: 0.8rem;
+    color: #64748b;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .status b {
+    color: #94a3b8;
+    font-weight: 600;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>SVG Script Player <span>交互演示</span></h1>
+</header>
+
+<div class="stage-wrap">
+  <div id="stage"></div>
+</div>
+
+<div class="controls">
+  <button id="playBtn" class="ctrl primary" disabled>▶ 播放</button>
+  <button id="pauseBtn" class="ctrl" disabled>⏸ 暂停</button>
+  <button id="resetBtn" class="ctrl" disabled>↺ 重置</button>
+</div>
+
+<div class="status">
+  <span>状态: <b id="statusText">加载中…</b></span>
+  <span>用户选择: <b id="answerText">—</b></span>
+</div>
+
+<script type="module">
+  import SVGScriptPlayer from "../../src/browser/index.js";
+
+  const $ = (id) => document.getElementById(id);
+  const playBtn = $("playBtn");
+  const pauseBtn = $("pauseBtn");
+  const resetBtn = $("resetBtn");
+  const statusText = $("statusText");
+  const answerText = $("answerText");
+
+  // ---------- 基础脚本 ----------
+  const BASE_SCRIPT = `
+config {
+  size = 900x600,
+  background = "#0f172a"
+}
+
+text {
+  at = [450, 80],
+  content = "小测验",
+  size = 36,
+  color = "#f1f5f9",
+  anchor = "middle",
+  weight = 700,
+  name = "title"
+}
+
+dialog {
+  at = [100, 180],
+  speaker = "系统",
+  text = "1 + 1 = ?",
+  side = "left",
+  theme = "light",
+  duration = 99999
+}
+
+tag { name = "question" }
+
+div {
+  at = [300, 280],
+  w = 300,
+  h = 220,
+  id = "quiz1"
+}
+  `.trim();
+
+  // ---------- 插槽 HTML ----------
+  const QUIZ_HTML = `
+    <div class="quiz">
+      <p>1 + 1 = ?</p>
+      <button data-event="click" data-value="A">A. 1</button>
+      <button data-event="click" data-value="B">B. 2</button>
+      <button data-event="click" data-value="C">C. 3</button>
+    </div>
+  `.trim();
+
+  // ---------- 反馈脚本 ----------
+  function feedbackScript(answer) {
+    if (answer === "B") {
+      return `
+dialog {
+  at = [300, 200],
+  speaker = "系统",
+  text = "答对了！",
+  side = "left",
+  theme = "primary",
+  duration = 3000
+}
+
+card {
+  at = [450, 400],
+  title = "得分 +1",
+  icon = "✅",
+  accent = "#10b981",
+  duration = 3000
+}
+      `.trim();
+    }
+    return `
+dialog {
+  at = [300, 200],
+  speaker = "系统",
+  text = "再想想",
+  side = "left",
+  theme = "light",
+  duration = 3000
+}
+
+card {
+  at = [450, 400],
+  title = "答错了",
+  subtitle = "正确答案是 B",
+  icon = "❌",
+  accent = "#ef4444",
+  duration = 3000
+}
+    `.trim();
+  }
+
+  // ---------- 状态 ----------
+  let player;
+  let answered = false;
+  let currentScript = BASE_SCRIPT;
+
+  // ---------- 初始化 ----------
+  async function init() {
+    try {
+      player = new SVGScriptPlayer({
+        container: "#stage",
+        speed: 1.0,
+      });
+
+      await loadQuiz();
+
+      playBtn.disabled = false;
+      pauseBtn.disabled = true;
+      resetBtn.disabled = false;
+
+      statusText.textContent = "就绪，点击答案";
+      statusText.className = "";
+
+      player.play();
+    } catch (err) {
+      console.error(err);
+      statusText.textContent = "加载失败: " + err.message;
+      statusText.className = "error";
+    }
+  }
+
+  // ---------- 加载测验 ----------
+  async function loadQuiz() {
+    answered = false;
+    currentScript = BASE_SCRIPT;
+    answerText.textContent = "—";
+
+    await player.load(currentScript);
+
+    // 加载完立刻塞 HTML
+    const slot = player.getSlot("quiz1");
+    if (slot) {
+      slot.setHTML(QUIZ_HTML);
+    }
+  }
+
+  // ---------- 播放反馈 ----------
+  async function playFeedback(answer) {
+    answered = true;
+    answerText.textContent = answer;
+
+    // 高亮选择的按钮
+    const buttons = document.querySelectorAll("#quiz1 button");
+    buttons.forEach((b) => {
+      if (b.dataset.value === answer) {
+        b.classList.add(answer === "B" ? "correct" : "wrong");
+      } else {
+        b.disabled = true;
+      }
+    });
+
+    // 等待 400ms，让用户看到高亮
+    await new Promise((r) => setTimeout(r, 400));
+
+    // 拼接反馈脚本，重新加载
+    currentScript = BASE_SCRIPT + "\n\n" + feedbackScript(answer);
+    await player.load(currentScript);
+
+    // 重新加载后，插槽会被清空，所以不再塞 HTML
+    player.play();
+  }
+
+  // ---------- 插槽事件 ----------
+  function bindSlotEvents() {
+    player.on("slot", (event) => {
+      if (event.type !== "slot:click") return;
+      if (event.slotId !== "quiz1") return;
+      if (answered) return;
+
+      const answer = event.payload.value;
+      playFeedback(answer);
+    });
+  }
+
+  // ---------- 控制按钮 ----------
+  playBtn.onclick = () => player.play();
+  pauseBtn.onclick = () => player.pause();
+
+  resetBtn.onclick = async () => {
+    // 重新加载基础脚本
+    await loadQuiz();
+    player.play();
+  };
+
+  // ---------- 播放器状态 ----------
+  function bindPlayerEvents() {
+    player.on("play", () => {
+      playBtn.disabled = true;
+      pauseBtn.disabled = false;
+      statusText.textContent = "播放中";
+    });
+
+    player.on("pause", () => {
+      playBtn.disabled = false;
+      pauseBtn.disabled = true;
+      statusText.textContent = "已暂停";
+    });
+
+    player.on("complete", () => {
+      playBtn.disabled = false;
+      pauseBtn.disabled = true;
+      statusText.textContent = "播放结束";
+    });
+
+    player.on("tag", (name) => {
+      console.log("[tag]", name);
+    });
+  }
+
+  // ---------- 启动 ----------
+  await init();
+  bindPlayerEvents();
+  bindSlotEvents();
+
+  // 调试
+  window.player = player;
+</script>
+
+</body>
+</html>

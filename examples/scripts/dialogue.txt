@@ -1,0 +1,63 @@
+# 多轮对话
+
+config {
+  size = 800x600,
+  background = "#0f172a"
+}
+
+dialog {
+  at = [100, 100],
+  speaker = "张三",
+  text = "你好，最近怎么样？",
+  side = "left",
+  theme = "light",
+  duration = 2000
+}
+
+dialog {
+  at = [500, 100],
+  speaker = "李四",
+  text = "还不错，谢谢",
+  side = "right",
+  theme = "primary",
+  duration = 2000
+}
+
+dialog {
+  at = [100, 220],
+  speaker = "张三",
+  text = "周末有空一起吃饭吗",
+  side = "left",
+  theme = "light",
+  duration = 2000
+}
+
+dialog {
+  at = [500, 220],
+  speaker = "李四",
+  text = "好啊，周六怎么样",
+  side = "right",
+  theme = "primary",
+  typing = true,
+  duration = 2200
+}
+
+dialog {
+  at = [100, 340],
+  speaker = "张三",
+  text = "没问题！",
+  side = "left",
+  theme = "light",
+  duration = 2000
+}
+
+card {
+  at = [400, 500],
+  title = "约定成功",
+  subtitle = "周六 中午 12:00",
+  icon = "📅",
+  accent = "#10b981",
+  duration = 3000
+}
+
+tag { name = "end" }

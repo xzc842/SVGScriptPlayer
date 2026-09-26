@@ -1,0 +1,80 @@
+# 柱状图动画
+
+config {
+  size = 960x640,
+  background = "#0f172a",
+  defaultEasing = "easeOutBack"
+}
+
+def bar(x, height, color, label) {
+  rect {
+    at = [@x, 500],
+    w = 60,
+    h = 0,
+    rx = 8,
+    ry = 8,
+    fill = @color,
+    name = "bar_" + @label
+  }
+  move {
+    target = "bar_" + @label,
+    to = [@x, 500 - @height],
+    duration = 800
+  }
+  rect {
+    at = [@x, 500 - @height],
+    w = 60,
+    h = @height,
+    rx = 8,
+    ry = 8,
+    fill = @color,
+    name = "bar2_" + @label
+  }
+  text {
+    at = [@x + 30, 540],
+    content = @label,
+    size = 16,
+    color = "#94a3b8",
+    anchor = "middle"
+  }
+  text {
+    at = [@x + 30, 480 - @height],
+    content = @height,
+    size = 18,
+    color = @color,
+    anchor = "middle",
+    weight = 600
+  }
+}
+
+# 标题
+text {
+  at = [480, 80],
+  content = "季度销售",
+  size = 32,
+  color = "#f1f5f9",
+  anchor = "middle",
+  weight = 700,
+  opacity = 0,
+  name = "title"
+}
+
+fade { target = "title", to = 1, duration = 600 }
+
+wait { ms = 400 }
+
+# 基线
+line {
+  at = [150, 500],
+  to = [810, 500],
+  stroke = "#334155",
+  stroke-width = 2
+}
+
+# 柱子
+bar { x = 200, height = 120, color = "#4f46e5", label = "Q1" }
+bar { x = 340, height = 200, color = "#ef4444", label = "Q2" }
+bar { x = 480, height = 160, color = "#10b981", label = "Q3" }
+bar { x = 620, height = 240, color = "#f59e0b", label = "Q4" }
+
+tag { name = "end" }

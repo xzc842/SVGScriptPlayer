@@ -1,0 +1,21 @@
+# 最小脚本：一个圆 + 一个对话
+
+circle {
+  at = [400, 300],
+  r = 50,
+  fill = "#4f46e5",
+  name = "dot"
+}
+
+move {
+  target = "dot",
+  to = [600, 300],
+  duration = 800
+}
+
+dialog {
+  at = [200, 450],
+  speaker = "系统",
+  text = "移动完成",
+  duration = 2000
+}

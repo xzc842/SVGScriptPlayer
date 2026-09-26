@@ -1,6 +1,6 @@
 import { parseScript } from "./parser.js";
 import { ParseError } from "../utils/errors.js";
-import { splitTopLevel } from "../utils/string.js";
+import { splitTopLevel, evaluateExpressions } from "../utils/string.js";
 
 /**
  * 展开所有 def 调用。
@@ -114,6 +114,7 @@ function parseChildrenString(source) {
  * 展开一次 def 调用。
  * - 绑定参数（有默认值则用默认值）
  * - 替换 body 中的 @param
+ * - 对表达式求值（@x + 50 → 150）
  * - 递归展开 body 里的 def
  */
 function expandDefCall(def, call, defs) {
@@ -135,6 +136,9 @@ function expandDefCall(def, call, defs) {
     const re = new RegExp(`@${k}\\b`, "g");
     body = body.replace(re, formatValue(v));
   }
+
+  // 对表达式求值
+  body = evaluateExpressions(body);
 
   const ast = parseScript(body, { file: `<def:${def.name}>` });
 

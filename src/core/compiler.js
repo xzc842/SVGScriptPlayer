@@ -88,8 +88,8 @@ function applyConfig(params, context) {
 }
 
 /**
- * 编译模板指令。
- * 关键：合并模板 fields 里定义的默认值。
+ * 编译模板。
+ * 合并模板 fields 里的默认值。
  */
 function compileTemplate(node, tpl, actions, context) {
   const params = applyTemplateDefaults(node.params, tpl);
@@ -106,10 +106,6 @@ function compileTemplate(node, tpl, actions, context) {
   context.time = endTime ?? context.time;
 }
 
-/**
- * 用模板 fields 里的 default 填充缺失字段。
- * 数组类型会浅拷贝，避免多个实例共享同一引用。
- */
 function applyTemplateDefaults(params, tpl) {
   const out = { ...params };
   if (!tpl.fields) return out;
@@ -170,7 +166,9 @@ function compileAtomic(node, actions, context) {
 
   // ===== 变换类 =====
   if (TRANSFORM_OPS.includes(node.name)) {
-    let to = undefined;
+    // move 的 to 是坐标，要用 resolveCoord
+    // 其他指令的 to 是值（fade 的透明度 0~1），保持原样
+    let to = p.to;
     if (node.name === "move" && p.to !== undefined) {
       to = resolveCoord(p.to, {
         getElement: (id) => context.elements.get(id),
@@ -195,10 +193,12 @@ function compileAtomic(node, actions, context) {
 
 /**
  * group：组内所有子指令并行开始，子指令的 at 相对组的 at。
+ * 支持嵌套 group。
  */
 function compileGroup(node, actions, context, templates) {
   const p = node.params;
 
+  // 组的基准位置
   const base =
     p.at !== undefined
       ? resolveCoord(p.at, {
@@ -209,12 +209,14 @@ function compileGroup(node, actions, context, templates) {
 
   const startTime = context.time + (p.delay ?? 0);
 
+  // 解析 children
   const childrenAst = parseChildren(p.children);
   if (!childrenAst || childrenAst.body.length === 0) {
     context.time = startTime;
     return;
   }
 
+  // 子指令的局部上下文
   const localContext = {
     ...context,
     time: startTime,
@@ -226,6 +228,7 @@ function compileGroup(node, actions, context, templates) {
   for (const child of childrenAst.body) {
     if (child.type !== "Directive") continue;
 
+    // 子指令 at 相对 base
     const childParams = { ...child.params };
     if (childParams.at !== undefined) {
       const childCoord = resolveCoord(childParams.at, {
@@ -240,6 +243,18 @@ function compileGroup(node, actions, context, templates) {
       }
     }
 
+    // 嵌套 group：递归
+    if (child.name === "group") {
+      compileGroup(
+        { ...child, params: childParams },
+        actions,
+        localContext,
+        templates
+      );
+      continue;
+    }
+
+    // 普通指令
     compileAtomic(
       { ...child, params: childParams },
       actions,
@@ -248,6 +263,7 @@ function compileGroup(node, actions, context, templates) {
     );
   }
 
+  // group 的结束时间 = 组内所有子指令的最大结束时间
   let maxEnd = startTime;
   for (let i = groupStartIdx; i < actions.length; i++) {
     const a = actions[i];
@@ -258,13 +274,20 @@ function compileGroup(node, actions, context, templates) {
   context.time = maxEnd;
 }
 
+/**
+ * 解析 children。
+ *   - AST 数组：expander 已展开 def，直接返回
+ *   - 字符串：从零解析（compiler 被单独调用时）
+ */
 function parseChildren(source) {
   if (!source) return null;
 
+  // AST 数组
   if (Array.isArray(source) && source.length > 0 && source[0]?.type) {
     return { body: source };
   }
 
+  // 字符串数组
   if (Array.isArray(source)) {
     const bodySource = source
       .map((s) => (typeof s === "string" ? s : ""))
@@ -272,6 +295,7 @@ function parseChildren(source) {
     return parseScript(bodySource);
   }
 
+  // 字符串
   if (typeof source !== "string") return null;
 
   let inner = source.trim();

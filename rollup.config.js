@@ -48,7 +48,7 @@ export default [
     output: {
       file: "dist/svg-script-player.umd.js",
       format: "umd",
-      name: "SVGScriptPlayer",
+      name: "SVGScriptPlayerLib",
       sourcemap: true,
     },
     plugins: [resolve()],
