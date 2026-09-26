@@ -1,0 +1,244 @@
+# ============================================
+# SVG Script Player - 进阶演示
+# 展示：def 嵌套 / group 嵌套 / 坐标引用 / 相对坐标 / 多种模板
+# ============================================
+
+config {
+  size = 960x640,
+  background = "#0b1120",
+  defaultEasing = "easeOut"
+}
+
+# ---------- 宏：带外圈的圆点 ----------
+def dot(color, r) {
+  circle {
+    at = [0, 0],
+    r = @r,
+    fill = @color,
+    stroke = "#ffffff",
+    stroke-width = 3
+  }
+  circle {
+    at = [0, 0],
+    r = @r + 8,
+    fill = "none",
+    stroke = @color,
+    stroke-width = 2,
+    opacity = 0.5
+  }
+}
+
+# ---------- 宏：带标签的柱子 ----------
+def bar(x, height, color, label) {
+  rect {
+    at = [@x, 500],
+    w = 50,
+    h = 0,
+    rx = 8,
+    ry = 8,
+    fill = @color,
+    name = "bar_" + @label
+  }
+  move {
+    target = "bar_" + @label,
+    to = [@x, 500 - @height],
+    duration = 800,
+    easing = "easeOutBack"
+  }
+  rect {
+    at = [@x, 500 - @height],
+    w = 50,
+    h = @height,
+    rx = 8,
+    ry = 8,
+    fill = @color,
+    name = "bar2_" + @label
+  }
+  text {
+    at = [@x + 25, 540],
+    content = @label,
+    size = 14,
+    color = "#94a3b8",
+    anchor = "middle"
+  }
+  text {
+    at = [@x + 25, 480 - @height],
+    content = @height,
+    size = 16,
+    color = @color,
+    anchor = "middle",
+    weight = 600
+  }
+}
+
+# ============================================
+# 场景 1：标题
+# ============================================
+tag { name = "start" }
+
+text {
+  at = [480, 100],
+  content = "进阶演示",
+  size = 40,
+  color = "#f1f5f9",
+  anchor = "middle",
+  weight = 700,
+  opacity = 0,
+  name = "mainTitle"
+}
+
+fade {
+  target = "mainTitle",
+  to = 1,
+  duration = 700
+}
+
+text {
+  at = [480, 140],
+  content = "def 嵌套 · group 嵌套 · 坐标引用",
+  size = 16,
+  color = "#64748b",
+  anchor = "middle",
+  opacity = 0,
+  name = "subTitle"
+}
+
+fade {
+  target = "subTitle",
+  to = 1,
+  duration = 700
+}
+
+wait { ms = 600 }
+
+# ============================================
+# 场景 2：柱状图（并行 4 根柱子）
+# ============================================
+tag { name = "chart" }
+
+# 基线
+line {
+  at = [180, 500],
+  to = [780, 500],
+  stroke = "#334155",
+  stroke-width = 2
+}
+
+# 4 根柱子（各自延迟不同，形成依次生长）
+bar { x = 220, height = 120, color = "#4f46e5", label = "A" }
+bar { x = 340, height = 200, color = "#ef4444", label = "B" }
+bar { x = 460, height = 160, color = "#10b981", label = "C" }
+bar { x = 580, height = 240, color = "#f59e0b", label = "D" }
+
+wait { ms = 400 }
+
+# 柱顶标注
+text {
+  at = [480, 120],
+  content = "季度销售",
+  size = 22,
+  color = "#e2e8f0",
+  anchor = "middle",
+  weight = 600,
+  name = "chartTitle"
+}
+
+wait { ms = 800 }
+
+# ============================================
+# 场景 3：三个圆并列（group 嵌套 group）
+# ============================================
+tag { name = "circles" }
+
+# 先让柱子淡出
+fade { target = "bar2_A", to = 0, duration = 400 }
+fade { target = "bar2_B", to = 0, duration = 400 }
+fade { target = "bar2_C", to = 0, duration = 400 }
+fade { target = "bar2_D", to = 0, duration = 400 }
+fade { target = "chartTitle", to = 0, duration = 400 }
+
+wait { ms = 400 }
+
+# 外层 group：整体居中
+group {
+  at = [480, 340],
+  children = [
+    circle {
+      at = [0, 0],
+      r = 200,
+      fill = "none",
+      stroke = "#1e293b",
+      stroke-width = 2,
+      opacity = 0,
+      name = "ring"
+    },
+    fade { target = "ring", to = 1, duration = 600 }
+  ]
+}
+
+wait { ms = 300 }
+
+# 内层 group：三个圆围绕中心
+group {
+  at = [480, 340],
+  children = [
+    dot { at = [0, -120],    color = "#4f46e5", r = 30, name = "c1" },
+    dot { at = [104, 60],    color = "#ef4444", r = 30, name = "c2" },
+    dot { at = [-104, 60],   color = "#10b981", r = 30, name = "c3" }
+  ]
+}
+
+tag { name = "balls" }
+
+wait { ms = 300 }
+
+# 让三个圆绕中心旋转（用 move 模拟）
+move { target = "c1", to = [104, 60],   duration = 600 }
+move { target = "c2", to = [-104, 60],  duration = 600 }
+move { target = "c3", to = [0, -120],   duration = 600 }
+
+wait { ms = 300 }
+
+move { target = "c1", to = [-104, 60],  duration = 600 }
+move { target = "c2", to = [0, -120],   duration = 600 }
+move { target = "c3", to = [104, 60],   duration = 600 }
+
+wait { ms = 400 }
+
+# ============================================
+# 场景 4：对话 + 卡片
+# ============================================
+tag { name = "dialog" }
+
+dialog {
+  at = [120, 180],
+  speaker = "系统",
+  text = "三个圆转完一圈了",
+  side = "left",
+  theme = "dark",
+  duration = 2400
+}
+
+dialog {
+  at = [600, 180],
+  speaker = "用户",
+  text = "再来一张卡片",
+  side = "right",
+  theme = "primary",
+  typing = true,
+  duration = 2400
+}
+
+wait { ms = 500 }
+
+card {
+  at = [480, 340],
+  title = "进阶演示完成",
+  subtitle = "4 根柱子 · 3 个圆 · 2 段对话",
+  icon = "🎉",
+  accent = "#10b981",
+  duration = 3200,
+  entrance = "scale"
+}
+
+tag { name = "end" }
