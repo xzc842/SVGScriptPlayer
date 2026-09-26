@@ -25,8 +25,9 @@
 ### 浏览器（CDN）
 
 ```html
-<script src="https://unpkg.com/svg-script-player"></script>
+<script src="https://unpkg.com/svg-script-player/dist/svg-script-player.umd.js"></script>
 <script>
+  const { SVGScriptPlayer } = SVGScriptPlayerLib;
   const player = new SVGScriptPlayer({ container: "#stage" });
 </script>
 ```
@@ -34,7 +35,7 @@
 ### 浏览器（打包器）
 
 ```js
-import SVGScriptPlayer from "svg-script-player";
+import { SVGScriptPlayer } from "svg-script-player"
 ```
 
 ### Node（渲染视频）
@@ -45,6 +46,7 @@ import {
   renderVideo,
   renderBatch,
   renderScriptToVideo,
+  svgToPng,
 } from "svg-script-player/node";
 ```
 

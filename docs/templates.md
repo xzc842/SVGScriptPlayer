@@ -263,9 +263,7 @@ player.registerTemplate("myTemplate", myTemplate);
 模板展开后的动作队列可用：
 
 ```js
-import { parseScript } from "svg-script-player";
-import { expandDefs } from "svg-script-player";
-import { compile } from "svg-script-player";
+import { parseScript, expandDefs, compile } from "svg-script-player";
 
 const ast = parseScript(source);
 const expanded = expandDefs(ast);

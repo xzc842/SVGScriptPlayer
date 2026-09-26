@@ -4,7 +4,7 @@
   "description": "用文本脚本描述 SVG 动画和交互场景的运行时，支持浏览器实时播放与 Node 端 FFmpeg 渲染成视频",
   "type": "module",
   "license": "MIT",
-  "author": "xzc",
+  "author": "xzc842",
   "keywords": [
     "svg",
     "animation",
@@ -29,11 +29,9 @@
   "browser": "./dist/svg-script-player.esm.js",
   "unpkg": "./dist/svg-script-player.umd.js",
   "jsdelivr": "./dist/svg-script-player.umd.js",
-  "types": "./dist/index.d.ts",
 
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
       "browser": "./dist/svg-script-player.esm.js",
       "node": {
         "import": "./dist/svg-script-player.node.js",
@@ -43,16 +41,13 @@
       "default": "./dist/svg-script-player.esm.js"
     },
     "./node": {
-      "types": "./dist/node.d.ts",
       "import": "./dist/svg-script-player.node.js",
       "require": "./dist/svg-script-player.node.cjs"
     },
     "./browser": {
-      "types": "./dist/index.d.ts",
       "default": "./dist/svg-script-player.esm.js"
     },
     "./templates": {
-      "types": "./dist/templates.d.ts",
       "default": "./dist/svg-script-player.esm.js"
     },
     "./package.json": "./package.json"
@@ -60,16 +55,64 @@
 
   "files": [
     "dist",
-    "README.md",
-    "LICENSE"
+    "README*.md",
+    "LICENSE",
+    "docs",
+    "ToDo.md"
   ],
 
   "sideEffects": false,
 
   "scripts": {
+    "dev": "rollup -c -w",
     "build": "rollup -c",
-    "build:types": "tsc --emitDeclarationOnly --declaration --outDir dist",
-    "prepublishOnly": "npm run build && npm run build:types"
+
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage",
+
+    "lint": "eslint src",
+    "format": "prettier --write \"src/**/*.js\"",
+
+    "example:browser": "vite examples/browser",
+    "example:browser:build": "vite build examples/browser",
+
+    "example:render": "node examples/node/render.js",
+    "example:render:demo2": "node examples/node/render.js demo2.txt",
+    "example:render:gif": "node examples/node/render-gif.js",
+    "example:render:frames": "node examples/node/render-frames.js",
+    "example:render:batch": "node examples/node/batch-render.js",
+
+    "prepublishOnly": "npm run build"
+  },
+
+  "dependencies": {
+    "@resvg/resvg-js": "^2.6.2"
+  },
+
+  "optionalDependencies": {
+    "ffmpeg-static": "^5.2.0",
+    "sharp": "^0.33.5"
+  },
+
+  "peerDependencies": {},
+  "peerDependenciesMeta": {},
+
+  "devDependencies": {
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-terser": "^0.4.4",
+    "@vitest/coverage-v8": "^1.6.0",
+    "eslint": "^8.57.0",
+    "prettier": "^3.3.3",
+    "rollup": "^4.21.0",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.0",
+    "vitest": "^1.6.0"
+  },
+
+  "engines": {
+    "node": ">=18.0.0"
   },
 
   "publishConfig": {

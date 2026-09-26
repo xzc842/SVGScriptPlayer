@@ -8,13 +8,19 @@ import {
   getTemplate,
 } from "../templates/index.js";
 
+// 纯逻辑模块，浏览器也能用，一并暴露
+import { SVGScriptError } from "../utils/errors.js";
+import { parseScript } from "../core/parser.js";
+import { expandDefs } from "../core/expander.js";
+import { compile } from "../core/compiler.js";
+
 loadBuiltinTemplates();
 
 /**
  * 兼容 `new SVGScriptPlayer(...)` 的写法。
  * 内部直接返回一个 Player 实例，避免 extends 出问题。
  */
-export class SVGScriptPlayer {
+class SVGScriptPlayer {
   constructor(options = {}) {
     const container = options.container
       ? queryContainer(options.container)
@@ -45,10 +51,13 @@ export class SVGScriptPlayer {
   }
 }
 
-export { registerTemplate, getTemplate, getAllTemplates };
-
-if (typeof window !== "undefined") {
-  window.SVGScriptPlayer = SVGScriptPlayer;
-}
-
-export default SVGScriptPlayer;
+export {
+  SVGScriptPlayer,
+  registerTemplate,
+  getTemplate,
+  getAllTemplates,
+  SVGScriptError,
+  parseScript,
+  expandDefs,
+  compile,
+};

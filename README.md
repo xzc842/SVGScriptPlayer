@@ -85,7 +85,7 @@ npm install sharp            # optional; alternative rendering engine
 <div id="stage"></div>
 
 <script type="module">
-  import SVGScriptPlayer from "svg-script-player";
+  import { SVGScriptPlayer } from "svg-script-player";
 
   const player = new SVGScriptPlayer({ container: "#stage" });
 
@@ -127,12 +127,15 @@ await renderScriptToVideo({
 ### CDN
 
 ```html
-<script src="https://unpkg.com/svg-script-player"></script>
+<script src="https://unpkg.com/svg-script-player/dist/svg-script-player.umd.js"></script>
 <script>
+  const { SVGScriptPlayer } = SVGScriptPlayerLib;
   const player = new SVGScriptPlayer({ container: "#stage" });
   player.load(script).then(() => player.play());
 </script>
 ```
+
+> The UMD global is `SVGScriptPlayerLib`; destructure to get the `SVGScriptPlayer` class.
 
 ---
 
@@ -276,7 +279,7 @@ def name(params) {
 import "other.txt"
 ```
 
-Full syntax reference: [`docs/script.md`](docs/script.md).
+Full syntax reference: [`docs/syntax.md`](docs/syntax.md).
 
 ---
 
@@ -285,6 +288,8 @@ Full syntax reference: [`docs/script.md`](docs/script.md).
 ### Loading & Playback
 
 ```js
+import { SVGScriptPlayer } from "svg-script-player";
+
 const player = new SVGScriptPlayer({ container: "#stage" });
 
 await player.load(scriptText);         // From string
@@ -343,6 +348,10 @@ div {
 Inject HTML from JS:
 
 ```js
+import { SVGScriptPlayer } from "svg-script-player";
+
+const player = new SVGScriptPlayer({ container: "#stage" });
+
 // Example: AI application
 player.getSlot("quiz1").setHTML(`
   <button data-event="click" data-value="A">A</button>
@@ -409,6 +418,7 @@ await renderBatch([
 
 ```js
 import { SVGScriptNodePlayer, svgToPng } from "svg-script-player/node";
+import fs from "node:fs/promises";
 
 const player = new SVGScriptNodePlayer();
 await player.loadFile("./intro.txt");

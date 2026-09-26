@@ -1,4 +1,4 @@
-import { SVGScriptNodePlayer, renderScriptToVideo } from "./index.js";
+import { renderScriptToVideo } from "./render.js";
 
 export async function renderBatch(jobs, defaults = {}) {
   const { concurrency = 2, ...sharedOpts } = defaults;

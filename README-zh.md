@@ -83,7 +83,7 @@ npm install sharp            # 可选，替代渲染引擎
 <div id="stage"></div>
 
 <script type="module">
-  import SVGScriptPlayer from "svg-script-player";
+  import { SVGScriptPlayer } from "svg-script-player";
 
   const player = new SVGScriptPlayer({ container: "#stage" });
 
@@ -125,12 +125,15 @@ await renderScriptToVideo({
 ### CDN
 
 ```html
-<script src="https://unpkg.com/svg-script-player"></script>
+<script src="https://unpkg.com/svg-script-player/dist/svg-script-player.umd.js"></script>
 <script>
+  const { SVGScriptPlayer } = SVGScriptPlayerLib;
   const player = new SVGScriptPlayer({ container: "#stage" });
   player.load(script).then(() => player.play());
 </script>
 ```
+
+> UMD 全局变量名是 `SVGScriptPlayerLib`，通过解构拿到 `SVGScriptPlayer` 类。
 
 ---
 
@@ -274,7 +277,7 @@ def 名称(参数) {
 import "other.txt"
 ```
 
-完整语法见 [`docs/script.md`](docs/script.md)。
+完整语法见 [`docs/syntax.md`](docs/syntax.md)。
 
 ---
 
@@ -283,6 +286,8 @@ import "other.txt"
 ### 加载与播放
 
 ```js
+import { SVGScriptPlayer } from "svg-script-player";
+
 const player = new SVGScriptPlayer({ container: "#stage" });
 
 await player.load(scriptText);         // 从字符串
@@ -341,7 +346,11 @@ div {
 JS 侧塞 HTML：
 
 ```js
-//示例：AI应用程序
+import { SVGScriptPlayer } from "svg-script-player";
+
+const player = new SVGScriptPlayer({ container: "#stage" });
+
+// 示例：AI 应用程序
 player.getSlot("quiz1").setHTML(`
   <button data-event="click" data-value="A">A</button>
   <button data-event="click" data-value="B">B</button>
@@ -407,6 +416,7 @@ await renderBatch([
 
 ```js
 import { SVGScriptNodePlayer, svgToPng } from "svg-script-player/node";
+import fs from "node:fs/promises";
 
 const player = new SVGScriptNodePlayer();
 await player.loadFile("./intro.txt");
