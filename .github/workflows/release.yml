@@ -11,21 +11,24 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: write      # 创建 GitHub Release
-      id-token: write      # OIDC Trusted Publishing（必需）
+      contents: write
+      id-token: write
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0    # 完整 git 历史，生成 release notes 用
+          fetch-depth: 0
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 20.x
-          registry-url: https://registry.npmjs.org
           cache: npm
+          # 不写 registry-url，避免 setup-node 注入 _authToken
+
+      - name: Check npm version
+        run: npm --version
 
       - name: Install dependencies
         run: npm ci
@@ -38,6 +41,7 @@ jobs:
 
       - name: Publish to npm
         run: npm publish --access public
+        # 不传 NODE_AUTH_TOKEN，让 npm CLI 走 OIDC
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
