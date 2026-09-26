@@ -23,25 +23,22 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20.x
+          node-version: 22.x
           cache: npm
 
-      - name: Check npm version
-        run: npm --version
+      - name: Update npm
+        run: npm install -g npm@latest
 
-      # ===== 新增：debug OIDC 环境 =====
+      - name: Check versions
+        run: |
+          node --version
+          npm --version
+
       - name: Debug OIDC env
         run: |
-          echo "ACTIONS_ID_TOKEN_REQUEST_URL=$ACTIONS_ID_TOKEN_REQUEST_URL"
+          echo "GITHUB_ACTIONS=[$GITHUB_ACTIONS]"
+          echo "ACTIONS_ID_TOKEN_REQUEST_URL set: ${ACTIONS_ID_TOKEN_REQUEST_URL:+yes}"
           echo "ACTIONS_ID_TOKEN_REQUEST_TOKEN_LEN=${#ACTIONS_ID_TOKEN_REQUEST_TOKEN}"
-          echo "--- npm registry ---"
-          npm config get registry
-          echo "--- ~/.npmrc ---"
-          cat ~/.npmrc || echo "(no ~/.npmrc)"
-          echo "--- project .npmrc ---"
-          cat .npmrc || echo "(no project .npmrc)"
-          echo "--- env ---"
-          env | grep -i npm || true
 
       - name: Install dependencies
         run: npm ci
@@ -54,6 +51,9 @@ jobs:
 
       - name: Publish to npm
         run: npm publish --access public --provenance
+        env:
+          GITHUB_ACTIONS: "true"
+          NODE_AUTH_TOKEN: ""
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
