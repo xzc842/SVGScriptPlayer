@@ -25,10 +25,23 @@ jobs:
         with:
           node-version: 20.x
           cache: npm
-          # 不写 registry-url，避免 setup-node 注入 _authToken
 
       - name: Check npm version
         run: npm --version
+
+      # ===== 新增：debug OIDC 环境 =====
+      - name: Debug OIDC env
+        run: |
+          echo "ACTIONS_ID_TOKEN_REQUEST_URL=$ACTIONS_ID_TOKEN_REQUEST_URL"
+          echo "ACTIONS_ID_TOKEN_REQUEST_TOKEN_LEN=${#ACTIONS_ID_TOKEN_REQUEST_TOKEN}"
+          echo "--- npm registry ---"
+          npm config get registry
+          echo "--- ~/.npmrc ---"
+          cat ~/.npmrc || echo "(no ~/.npmrc)"
+          echo "--- project .npmrc ---"
+          cat .npmrc || echo "(no project .npmrc)"
+          echo "--- env ---"
+          env | grep -i npm || true
 
       - name: Install dependencies
         run: npm ci
