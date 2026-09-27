@@ -211,7 +211,7 @@ export class Player {
   render(time) {
     if (!this.timeline) return;
 
-    // tag 只触发一次
+    // tag 触发检查
     for (const [name, t] of this.timeline.tags) {
       if (!this._firedTags.has(name) && time >= t) {
         this._firedTags.add(name);
@@ -219,7 +219,7 @@ export class Player {
       }
     }
 
-    // 重建元素
+    // 重建 SVG
     const actions = this.timeline.getActionsUpTo(time);
     this.renderer.createRoot(this.config.size, this.config.background);
 
@@ -235,7 +235,19 @@ export class Player {
       }
     }
 
+    // 应用动作
     for (const a of actions) {
+      if (a.type === "slot") {
+        // 插槽：只创建一次
+        if (this.slots && !this.slots.get(a.id)) {
+          this.slots.create(a.id, {
+            at: a.at || [0, 0],
+            w: a.w,
+            h: a.h,
+          });
+        }
+        continue;
+      }
       this.renderer.apply(a);
     }
   }

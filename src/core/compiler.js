@@ -142,6 +142,25 @@ function compileAtomic(node, actions, context) {
     return;
   }
 
+  // ===== div 插槽 =====
+  if (node.name === "div") {
+    if (!p.id) {
+      throw new CompileError(`div 缺少 id`, { line: node.line });
+    }
+    actions.push({
+      type: "slot",
+      id: p.id,
+      at: pos ?? [0, 0],
+      w: p.w ?? 300,
+      h: p.h ?? 200,
+      time: startTime,
+      duration,
+    });
+    context.lastPosition = pos;
+    context.time = startTime + duration;
+    return;
+  }
+
   // ===== 创建类 =====
   if (CREATE_SHAPES.includes(node.name)) {
     const id = p.name || `el_${actions.length}`;
@@ -166,8 +185,6 @@ function compileAtomic(node, actions, context) {
 
   // ===== 变换类 =====
   if (TRANSFORM_OPS.includes(node.name)) {
-    // move 的 to 是坐标，要用 resolveCoord
-    // 其他指令的 to 是值（fade 的透明度 0~1），保持原样
     let to = p.to;
     if (node.name === "move" && p.to !== undefined) {
       to = resolveCoord(p.to, {

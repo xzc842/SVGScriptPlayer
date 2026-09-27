@@ -47,6 +47,10 @@ export class Renderer {
       case "fade":
         this.applyTransform(action);
         break;
+      case "slot":
+        // 插槽由 player 的 SlotManager 处理，renderer 跳过
+        break;
+      // wait / tag 不渲染
     }
   }
 

@@ -175,7 +175,59 @@ describe("compiler", () => {
       });
     });
   });
+  // ============================================================
+  // div 插槽
+  // ============================================================
+  describe("div 插槽", () => {
+    it("div 生成 slot 动作", () => {
+      const { actions } = compileSource(`
+        div { at = [200, 300], w = 400, h = 200, id = "quiz1" }
+      `);
+      expect(actions).toHaveLength(1);
+      expect(actions[0]).toMatchObject({
+        type: "slot",
+        id: "quiz1",
+        at: [200, 300],
+        w: 400,
+        h: 200,
+      });
+    });
 
+    it("div 缺 id 抛 CompileError", () => {
+      expect(() => {
+        compileSource(`div { at = [0, 0], w = 100, h = 100 }`);
+      }).toThrow(CompileError);
+    });
+
+    it("div 使用默认 w 和 h", () => {
+      const { actions } = compileSource(`
+        div { at = [100, 100], id = "slot1" }
+      `);
+      expect(actions[0].w).toBe(300);
+      expect(actions[0].h).toBe(200);
+    });
+
+    it("div 和其他指令混用", () => {
+      const { actions } = compileSource(`
+        text { at = [300, 200], content = "问题", size = 16 }
+        div { at = [200, 320], w = 400, h = 120, id = "quiz1" }
+        circle { at = [100, 100], r = 40 }
+      `);
+      const slots = actions.filter((a) => a.type === "slot");
+      expect(slots).toHaveLength(1);
+      expect(slots[0].id).toBe("quiz1");
+
+      const circles = actions.filter(
+        (a) => a.type === "create" && a.shape === "circle"
+      );
+      expect(circles).toHaveLength(1);
+
+      const texts = actions.filter(
+        (a) => a.type === "create" && a.shape === "text"
+      );
+      expect(texts).toHaveLength(1);
+    });
+  });
   // ============================================================
   // 时间轴
   // ============================================================

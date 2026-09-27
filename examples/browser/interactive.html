@@ -111,6 +111,11 @@
     color: #fff;
   }
 
+  .quiz button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
   .controls {
     width: 100%;
     max-width: 960px;
@@ -187,7 +192,7 @@
 </div>
 
 <script type="module">
-  import SVGScriptPlayer from "../../src/browser/index.js";
+  import { SVGScriptPlayer } from "../../src/browser/index.js";
 
   const $ = (id) => document.getElementById(id);
   const playBtn = $("playBtn");
@@ -196,8 +201,10 @@
   const statusText = $("statusText");
   const answerText = $("answerText");
 
-  // ---------- 基础脚本 ----------
-  const BASE_SCRIPT = `
+  // ============================================
+  // 脚本：问题 → 断点 → 正确/错误反馈
+  // ============================================
+  const SCRIPT = `
 config {
   size = 900x600,
   background = "#0f172a"
@@ -209,8 +216,7 @@ text {
   size = 36,
   color = "#f1f5f9",
   anchor = "middle",
-  weight = 700,
-  name = "title"
+  weight = 700
 }
 
 dialog {
@@ -219,20 +225,65 @@ dialog {
   text = "1 + 1 = ?",
   side = "left",
   theme = "light",
-  duration = 99999
+  duration = 500
 }
 
-tag { name = "question" }
+tag { name = "wait-for-answer" }
 
-div {
-  at = [300, 280],
-  w = 300,
-  h = 220,
-  id = "quiz1"
+# ---------- 正确反馈 ----------
+tag { name = "correct" }
+
+dialog {
+  at = [300, 200],
+  speaker = "系统",
+  text = "答对了！",
+  side = "left",
+  theme = "primary",
+  duration = 2000
 }
+
+card {
+  at = [450, 400],
+  title = "得分 +1",
+  icon = "✅",
+  accent = "#10b981",
+  duration = 2500
+}
+
+tag { name = "correct-end" }
+
+# ---------- 错误反馈 ----------
+tag { name = "wrong" }
+
+dialog {
+  at = [300, 200],
+  speaker = "系统",
+  text = "再想想",
+  side = "left",
+  theme = "light",
+  duration = 2000
+}
+
+card {
+  at = [450, 400],
+  title = "答错了",
+  subtitle = "正确答案是 B",
+  icon = "❌",
+  accent = "#ef4444",
+  duration = 2500
+}
+
+tag { name = "wrong-end" }
   `.trim();
 
-  // ---------- 插槽 HTML ----------
+  // ============================================
+  // 插槽配置 & HTML
+  // ============================================
+  const SLOT_ID = "quiz1";
+  const SLOT_AT = [300, 280];
+  const SLOT_W = 300;
+  const SLOT_H = 220;
+
   const QUIZ_HTML = `
     <div class="quiz">
       <p>1 + 1 = ?</p>
@@ -242,61 +293,24 @@ div {
     </div>
   `.trim();
 
-  // ---------- 反馈脚本 ----------
-  function feedbackScript(answer) {
-    if (answer === "B") {
-      return `
-dialog {
-  at = [300, 200],
-  speaker = "系统",
-  text = "答对了！",
-  side = "left",
-  theme = "primary",
-  duration = 3000
-}
-
-card {
-  at = [450, 400],
-  title = "得分 +1",
-  icon = "✅",
-  accent = "#10b981",
-  duration = 3000
-}
-      `.trim();
-    }
-    return `
-dialog {
-  at = [300, 200],
-  speaker = "系统",
-  text = "再想想",
-  side = "left",
-  theme = "light",
-  duration = 3000
-}
-
-card {
-  at = [450, 400],
-  title = "答错了",
-  subtitle = "正确答案是 B",
-  icon = "❌",
-  accent = "#ef4444",
-  duration = 3000
-}
-    `.trim();
-  }
-
-  // ---------- 状态 ----------
+  // ============================================
+  // 状态
+  // ============================================
   let player;
   let answered = false;
-  let currentScript = BASE_SCRIPT;
 
-  // ---------- 初始化 ----------
+  // ============================================
+  // 初始化
+  // ============================================
   async function init() {
     try {
       player = new SVGScriptPlayer({
         container: "#stage",
         speed: 1.0,
       });
+
+      bindPlayerEvents();
+      bindSlotEvents();
 
       await loadQuiz();
 
@@ -315,81 +329,102 @@ card {
     }
   }
 
-  // ---------- 加载测验 ----------
+  // ============================================
+  // 加载测验
+  // 关键：手动创建插槽，因为 div 的 time > 0
+  // ============================================
   async function loadQuiz() {
     answered = false;
-    currentScript = BASE_SCRIPT;
     answerText.textContent = "—";
 
-    await player.load(currentScript);
+    await player.load(SCRIPT);
 
-    // 加载完立刻塞 HTML
-    const slot = player.getSlot("quiz1");
+    // 手动创建插槽（render(0) 时 div 还没到）
+    if (player.slots && !player.slots.get(SLOT_ID)) {
+      player.slots.create(SLOT_ID, {
+        at: SLOT_AT,
+        w: SLOT_W,
+        h: SLOT_H,
+      });
+    }
+
+    // 塞 HTML
+    const slot = player.getSlot(SLOT_ID);
     if (slot) {
       slot.setHTML(QUIZ_HTML);
     }
   }
 
-  // ---------- 播放反馈 ----------
-  async function playFeedback(answer) {
-    answered = true;
-    answerText.textContent = answer;
-
-    // 高亮选择的按钮
-    const buttons = document.querySelectorAll("#quiz1 button");
-    buttons.forEach((b) => {
-      if (b.dataset.value === answer) {
-        b.classList.add(answer === "B" ? "correct" : "wrong");
-      } else {
-        b.disabled = true;
-      }
-    });
-
-    // 等待 400ms，让用户看到高亮
-    await new Promise((r) => setTimeout(r, 400));
-
-    // 拼接反馈脚本，重新加载
-    currentScript = BASE_SCRIPT + "\n\n" + feedbackScript(answer);
-    await player.load(currentScript);
-
-    // 重新加载后，插槽会被清空，所以不再塞 HTML
-    player.play();
+  // ============================================
+  // 删除插槽
+  // ============================================
+  function removeSlot() {
+    if (player.slots && player.slots.get(SLOT_ID)) {
+      player.slots.remove(SLOT_ID);
+    }
   }
 
-  // ---------- 插槽事件 ----------
+  // ============================================
+  // 插槽事件
+  // ============================================
   function bindSlotEvents() {
     player.on("slot", (event) => {
       if (event.type !== "slot:click") return;
-      if (event.slotId !== "quiz1") return;
+      if (event.slotId !== SLOT_ID) return;
       if (answered) return;
 
+      answered = true;
       const answer = event.payload.value;
-      playFeedback(answer);
+      answerText.textContent = answer;
+
+      // 高亮按钮
+      document.querySelectorAll(`#${SLOT_ID} button`).forEach((b) => {
+        if (b.dataset.value === answer) {
+          b.classList.add(answer === "B" ? "correct" : "wrong");
+        } else {
+          b.disabled = true;
+        }
+      });
+
+      // 等 400ms 让用户看到高亮，然后删插槽 + 跳反馈
+      setTimeout(() => {
+        removeSlot();
+        player.seekTag(answer === "B" ? "correct" : "wrong");
+        player.play();
+      }, 400);
     });
   }
 
-  // ---------- 控制按钮 ----------
-  playBtn.onclick = () => player.play();
-  pauseBtn.onclick = () => player.pause();
-
-  resetBtn.onclick = async () => {
-    // 重新加载基础脚本
-    await loadQuiz();
-    player.play();
-  };
-
-  // ---------- 播放器状态 ----------
+  // ============================================
+  // 播放器事件
+  // ============================================
   function bindPlayerEvents() {
+    // 到断点暂停
+    player.on("tag", (name) => {
+      if (name === "wait-for-answer") {
+        player.pause();
+        statusText.textContent = "等待你的回答";
+      }
+      if (name === "correct-end" || name === "wrong-end") {
+        player.pause();
+        statusText.textContent = "播放结束";
+      }
+    });
+
     player.on("play", () => {
       playBtn.disabled = true;
       pauseBtn.disabled = false;
-      statusText.textContent = "播放中";
+      if (statusText.textContent !== "等待你的回答") {
+        statusText.textContent = "播放中";
+      }
     });
 
     player.on("pause", () => {
       playBtn.disabled = false;
       pauseBtn.disabled = true;
-      statusText.textContent = "已暂停";
+      if (statusText.textContent !== "等待你的回答") {
+        statusText.textContent = "已暂停";
+      }
     });
 
     player.on("complete", () => {
@@ -397,16 +432,25 @@ card {
       pauseBtn.disabled = true;
       statusText.textContent = "播放结束";
     });
-
-    player.on("tag", (name) => {
-      console.log("[tag]", name);
-    });
   }
 
-  // ---------- 启动 ----------
+  // ============================================
+  // 控制按钮
+  // ============================================
+  playBtn.onclick = () => player.play();
+  pauseBtn.onclick = () => player.pause();
+
+  resetBtn.onclick = async () => {
+    removeSlot();          // 清掉旧插槽
+    await loadQuiz();      // 重新加载 + 建插槽
+    statusText.textContent = "已重置";
+    player.play();
+  };
+
+  // ============================================
+  // 启动
+  // ============================================
   await init();
-  bindPlayerEvents();
-  bindSlotEvents();
 
   // 调试
   window.player = player;
