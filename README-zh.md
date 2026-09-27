@@ -12,7 +12,7 @@
 - **浏览器播放** → 实时渲染，支持事件回调
 - **Node 出片** → FFmpeg 渲染成 MP4 / GIF / 序列帧
 - **可交互** → `div` 插槽嵌入 HTML，事件回流给 AI
-
+> [demo地址](https://demo.xuezicheng.dpdns.org/svg-script-player-demo/index.html)
 ```
 dialog {
   at = [300, 200],
